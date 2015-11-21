@@ -1,0 +1,60 @@
+task main()
+{
+	/*
+	 According to morse specs <https://en.wikipedia.org/wiki/Morse_code#Representation.2C_timing_and_speeds>
+	 	di		=1u
+		da		=3u
+		dotspace	=1u
+		charspace	=3u
+		wordspace	=7u
+	 */
+	int threshold=20;
+	int unit=50; // milliseconds
+	int di=unit, da=3*unit, dotspace=unit, charspace=3*unit, wordspace=7*unit;
+	int interval=10;
+	int recording[100]; //Is there a way to not init the array with a length?
+	int reallength=100;
+	int recordingStripped[100];
+	int time=0;
+	SetSensor(IN_1,SENSOR_SOUND);
+	while (time<100) //Read data to recording[]
+	{
+		recording[time]=SENSOR_1;
+		/*
+		ClearScreen();
+		NumOut(0,LCD_LINE2,recording[time]);
+		*/
+		for (int i=0; i<recording[time]; i++)
+		{
+			PointOut(time,i);
+		}
+		Wait(interval);
+		time++;
+	} /*
+	for (int i=10000; i>0; i--)
+	{
+		if (recording[i]==0)
+		{
+			reallength=i;
+		}
+	} */
+	for (int i=0; i<reallength; i++) //Turn recording[] into 1's and 0's based on threshold
+	{
+		if (recording[i] >= threshold)
+		{
+			recordingStripped[i]=1;
+		}
+		else
+		{
+			recordingStripped[i]=0;
+		}
+	}
+	for (int i=0; i<reallength; i++)
+	{
+		if (recordingStripped[i]==1)
+		{
+			PointOut(i,50);
+		}
+	}
+	while (true) {}
+}
