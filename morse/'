@@ -1,4 +1,3 @@
-task die() {}
 task main()
 {
 	/*
@@ -10,14 +9,14 @@ task main()
 		wordspace	=7u
 	 */
 	int threshold=20;
-	int unit=200; // milliseconds
+	int unit=50; // milliseconds
 	float di=unit, da=3*unit, dotspace=unit, charspace=3*unit, wordspace=7*unit; //Apparently float/int=int, not float
 	float almostDi, almostDa, almostDotspace, almostCharspace, almostWordspace=0;
 	int sampleInterval=10; // milliseconds
-	int recording[500]; //Is there a way to not init the array with a length?
-	int reallength=500;
-	int recordingStripped[500];
-	int morseRecording[500];
+	int recording[100]; //Is there a way to not init the array with a length?
+	int reallength=100;
+	int recordingStripped[100];
+	int morseRecording[100];
 	string translated = "";
 	int time=0;
 
@@ -62,7 +61,7 @@ task main()
 		dict4[1][1][1][1]="ch";
 
 	SetSensor(IN_1,SENSOR_SOUND);
-	while (time<500) //Read data to recording[]
+	while (time<100) //Read data to recording[]
 	{
 		recording[time]=SENSOR_1;
 		/*
@@ -101,7 +100,7 @@ task main()
 			PointOut(x,50);
 		}
 	}
-	recordingStripped[499]=1; // Super ugly
+	recordingStripped[99]=1; // Super ugly
 	for (int i=0,j=0,k=0,last=0; i<reallength; i++) //i=counter, j=amount of readings equalling last, last=last digit, k=counter in morseRecording[]
 	{
 //		NumOut(0,LCD_LINE3,j);
@@ -135,7 +134,12 @@ task main()
 		}
 		last = recordingStripped[i];
 	}
-	TextOut(0,LCD_LINE6,"HALP");
+	morseRecording[0] = 0;
+	morseRecording[1] = 1;
+	morseRecording[2] = 10;
+	morseRecording[3] = 0;
+	morseRecording[4] = 1;
+	morseRecording[5] = 10;
 	for (int i=0,charLength=0,tmpMorseCharacter[5]; i<reallength; i++) //Morse to text
 	{
 		if (morseRecording[i] < 11) // Meaning di, da or dotspace
@@ -143,15 +147,12 @@ task main()
 			if (morseRecording[i] <2) {tmpMorseCharacter[charLength] = morseRecording[i];}
 			charLength++;
 		}
-		else 
+		if (morseRecording[i] < 30 && morseRecording[i] > 10)
 		{
-//			ExitTo(die);
-//			if (charLength==1) { strcat(translated, dict1[0]);}
-//			if (charLength==2) { strcat(translated, dict2[0][0]);}
 			if (charLength==1) { strcat(translated, dict1[tmpMorseCharacter[0]]); }
-			if (charLength==2) { strcat(translated, dict2[tmpMorseCharacter[0]][tmpMorseCharacter[1]]); }
+			if (charLength==2) { strcat(translated, dict1[tmpMorseCharacter[0]][tmpMorseCharacter[1]]); }
 			charLength=0;
-		} 
+		}
 	}
 	TextOut(0,LCD_LINE1,translated);
 	/*
