@@ -1,0 +1,15 @@
+task main(){
+	int reading;
+	SetSensorUltrasonic(IN_1);
+	byte handle;
+	DeleteFile("data.csv");
+	CreateFile("data.txt", 2048, handle);
+	string readingStr;
+	while(true) {
+		reading = SensorUS(IN_1);
+		readingStr = NumToStr(reading);
+		int slen = StrLen(readingStr);
+		WriteBytes(handle, "hej", slen);
+		CloseFile(handle);
+	}
+}

@@ -1,0 +1,96 @@
+task main()
+{
+	float dataT[100];
+	float dataH[100];
+	int tStart;
+	int t=0;
+	int runde;
+	byte fileHandle;
+	int reading;
+	string toOut = "";
+	short bytesWritten;
+	int posL = 0;
+	int posR = 100;
+	float scale = 1;
+	
+	float sumY, sumX, sumXY, sumXX; // For linear regression
+	float drawA,drawB,realA,realB;	// For linear regression
+
+	DeleteFile("data.txt");
+	CreateFile("data.txt", 1024, fileHandle);
+	WriteLnString(fileHandle, "t,h", bytesWritten);
+	SetSensorUltrasonic(IN_1);
+	tStart = CurrentTick();
+	while (runde<100) {
+		reading = SensorUS(IN_1);
+		dataT[runde] = (CurrentTick() - tStart);	// Unit: ms
+		dataH[runde] = reading;				// Unit: cm
+		toOut = StrCat(NumToStr(CurrentTick()-tStart), ",", NumToStr(reading));
+		WriteLnString(fileHandle, toOut, bytesWritten);
+		if (reading>64) { reading = 64; }	// Avoid overflow
+		PointOut(runde, dataH[runde]*scale);
+		runde++;
+		if (ButtonPressed(BTNCENTER,0)) { break; }
+	}
+	Wait(500);
+	ClearScreen();
+	runde = 1; // 1=left border, 2=right border
+	while (true) {
+		for (int i = 1; i< 64; i++) {
+			PointOut(posL,i);
+			PointOut(posR,i);
+		}
+		for (int j = 1; j < ArrayLen(dataH); j++) {
+			PointOut(j,dataH[j]*scale);
+		}
+		if (runde == 1) {
+			if (ButtonPressed(BTNLEFT,0)) { posL--; }
+			if (ButtonPressed(BTNRIGHT,0)) { posL++; }
+		} else if (runde == 2) {
+			if (ButtonPressed(BTNLEFT,0)) { posR--; }
+			if (ButtonPressed(BTNRIGHT,0)) { posR++; }
+		}
+		if (ButtonPressed(BTNCENTER,0) && runde == 1) {
+			posR = posL;
+			runde++;
+			Wait(500);
+		}
+		if (ButtonPressed(BTNCENTER,0) && runde == 2) { break; }
+		Wait(100);
+		ClearScreen();
+	}
+	for (int i = posL; i < posR; i++) {	//Do the linear regression
+		sumY = sumY + dataH[i];
+		sumX = sumX + i;
+		sumXY = sumXY + i*dataH[i];
+		sumXX = sumXX + i*i;
+	}
+	drawA = ((posR-posL)*sumXY-(sumX*sumY)) / ((posR-posL)*(sumXX)-(sumX)*(sumX));
+	drawB = (sumY-drawA*sumX)/(posR-posL);
+	CloseFile(fileHandle);
+
+	sumX = 0; //Reset variables for new regression
+	sumY = 0;
+	sumXY = 0;
+	sumXX = 0;
+
+	// Linear regression again. Only once should be needed, since real-regression and draw-regression should be scalable
+	for (int i = posL; i < posR; i++) {
+		sumY = sumY + dataH[i]/100;
+		sumX = sumX + dataT[i]/1000;
+		sumXY = sumXY + (dataT[i]/1000)*(dataH[i]/100);
+		sumXX = sumXX + (dataT[i]/1000)*(dataT[i]/1000);
+	}
+	realA = ((posR-posL)*sumXY-(sumX*sumY)) / ((posR-posL)*(sumXX)-(sumX)*(sumX));
+	realB = (sumY-realA*sumX)/(posR-posL);
+
+	TextOut(0,LCD_LINE7,"a (m/s):");
+	NumOut(48,LCD_LINE7,realA);
+	NumOut(0,LCD_LINE8,realB);
+	
+	for (int i = 1; i < 100; i++) {
+		PointOut(i,(drawA*i+drawB)*scale);
+	}
+
+	while (true) {} // Don't exit
+}
