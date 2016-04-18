@@ -1,0 +1,9 @@
+task main()
+{
+	SetSensorUltrasonic(IN_1);
+	while (true) {
+		NumOut(0,0, SensorUS(IN_1));
+		PlayToneEx(10*SensorUS(IN_1)+220,0,100,1);
+		ClearScreen();
+	}
+}
